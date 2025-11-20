@@ -1,14 +1,35 @@
 const accessService = require('../services/access.service')
 
+const { Created, SuccessResponse } = require('../core/success.response')
+
 class AccessController {
-  async signUp(req, res, next) {
-    try {
-      const newShop = await accessService.signUp(req.body)
-      res.status(201).json(newShop)
-    } catch (error) {
-      next(error)
-    }
+  logout = async (req, res, next) => {
+    const logoutShop = await accessService.logout({
+      keyStore: req.keyStore,
+    })
+    new SuccessResponse({
+      message: 'Logout shop successfully',
+      metadata: logoutShop,
+    }).send(res)
   }
+
+  login = async (req, res, next) => {
+    const loginShop = await accessService.login(req.body)
+    new SuccessResponse({
+      message: 'Login shop successfully',
+      metadata: loginShop,
+      statusCode: 201,
+    }).send(res)
+  }
+
+  signUp = async (req, res, next) => {
+    const newShop = await accessService.signUp(req.body)
+    new Created({
+      message: 'Register new shop successfully',
+      metadata: newShop,
+    }).send(res)
+  }
+
 }
 
 module.exports = new AccessController()
