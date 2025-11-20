@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const KeyTokenService = require('./keyToken.service')
 const { crateTokenPair } = require('../auth/authUtils')
 const { getInfoData } = require('../utils')
-const { BadRequestError } = require('../core/error.response')
+const { BadRequestError, ErrorResponse } = require('../core/error.response')
 const { findByEmail } = require('./shop.service')
 
 const RoleShop = {
@@ -15,6 +15,65 @@ const RoleShop = {
 }
 
 class AccessService {
+  handlerRefreshToken = async (refreshToken) => {
+    const foundToken = await KeyTokenService.findByRefreshTokenUsed(
+      refreshToken
+    )
+    if (foundToken) {
+      const { userId, email } = await verifyJWT(
+        refreshToken,
+        foundToken.privateKey
+      )
+
+      //xóa hết token trong store
+      await KeyTokenService.deleteById(userId)
+
+      throw new ErrorResponse('Something wrong happen. Please re-login', 403)
+    }
+
+    const holderToken = await KeyTokenService.findByRefreshTokenUsed(
+      refreshToken
+    )
+
+    if (!holderToken) {
+      throw new ErrorResponse('Invalid refresh token', 403)
+    }
+
+    //verify token
+    const { userId, email } = await verifyJWT(
+      refreshToken,
+      holderToken.privateKey
+    )
+
+    const foundShop = await findByEmail({ email })
+    if (!foundShop) {
+      throw new BadRequestError('Shop not registered')
+    }
+
+    const tokens = await crateTokenPair(
+      {
+        userId: foundShop._id,
+        email,
+      },
+      holderToken.publicKey, // verify
+      holderToken.privateKey // sign
+    )
+
+    await holderToken.update({
+      $set: {
+        refreshToken: tokens.refreshToken,
+      },
+      $addToSet: {
+        refreshTokenUsed: refreshToken,
+      },
+    })
+
+    return {
+      user: { userId, email },
+      tokens,
+    }
+  }
+
   login = async ({ email, password, refreshToken = null }) => {
     const foundShop = await findByEmail({ email })
 
@@ -126,6 +185,13 @@ class AccessService {
   }
 
   async logout({ keyStore }) {
+    //add refreshToken hiện tại vào danh sách đã sử dụng
+    // await KeyTokenService.updateRefreshTokenUsed(
+    //   keyStore._id,
+    //   keyStore.refreshToken
+    // )
+    //xóa khóa khỏi database
+
     const delKey = await KeyTokenService.removeKeyById(keyStore._id)
     return delKey
   }

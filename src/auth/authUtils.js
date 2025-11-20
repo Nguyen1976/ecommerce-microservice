@@ -54,8 +54,6 @@ const authentication = asyncHandler(async (req, res, next) => {
   if (!accessToken) {
     throw new BadRequestError('Invalid access token')
   }
-  console.log('🚀 ~ authUtils.js:48 ~ keyStore:', keyStore.publicKey)
-  console.log('🚀 ~ authUtils.js:54 ~ accessToken:', accessToken)
 
   try {
     const decodeUser = JWT.verify(accessToken, keyStore.publicKey, {
@@ -72,7 +70,12 @@ const authentication = asyncHandler(async (req, res, next) => {
   }
 })
 
+const verifyJWT = async (token, keySecret) => {
+  return await JWT.verify(token, keySecret)
+}
+
 module.exports = {
   crateTokenPair,
   authentication,
+  verifyJWT,
 }

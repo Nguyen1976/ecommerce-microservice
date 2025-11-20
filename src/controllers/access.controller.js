@@ -3,6 +3,13 @@ const accessService = require('../services/access.service')
 const { Created, SuccessResponse } = require('../core/success.response')
 
 class AccessController {
+  handlerRefreshToken = async (req, res, next) => {
+    new SuccessResponse({
+      message: 'get token successfully',
+      metadata: await accessService.handlerRefreshToken(req.body.refreshToken),
+    }).send(res)
+  }
+
   logout = async (req, res, next) => {
     const logoutShop = await accessService.logout({
       keyStore: req.keyStore,
@@ -29,7 +36,6 @@ class AccessController {
       metadata: newShop,
     }).send(res)
   }
-
 }
 
 module.exports = new AccessController()

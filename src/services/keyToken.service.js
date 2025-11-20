@@ -37,9 +37,33 @@ class KeyTokenService {
     return await KeyTokenModel.findOne({ user: new Types.ObjectId(userId) })
   }
 
-  async removeKeyById(id) {
-    const delKey = await KeyTokenModel.remove(id)
+  static async removeKeyById(id) {
+    const delKey = await KeyTokenModel.remove({ _id: id })
     return delKey
+  }
+
+  static async findByRefreshTokenUsed(refreshToken) {
+    return await KeyTokenModel.findOne({
+      refreshTokenUsed: refreshToken,
+    })
+  }
+
+  static async deleteById(userId) {
+    return await KeyTokenModel.findByIdAndDelete({ user: userId })
+  }
+
+  static async findByRefreshToken(refreshToken) {
+    return await KeyTokenModel.findOne({
+      refreshToken,
+    })
+  }
+
+  static async updateRefreshTokenUsed(id, refreshToken) {
+    return await KeyTokenModel.findOneAndUpdate(
+      { _id: id },
+      { $addToSet: { refreshTokenUsed: refreshToken } },
+      { new: true }
+    )
   }
 }
 module.exports = KeyTokenService
