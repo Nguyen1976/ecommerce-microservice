@@ -7,6 +7,7 @@ const HEADER = {
   API_KEY: 'x-api-key',
   CLIENT_ID: 'x-client-id',
   AUTHORIZATION: 'authorization',
+  REFRESH_TOKEN: 'refreshtoken',
 }
 
 const crateTokenPair = async (payload, publicKey, privateKey) => {
@@ -39,6 +40,37 @@ const crateTokenPair = async (payload, publicKey, privateKey) => {
 }
 
 const authentication = asyncHandler(async (req, res, next) => {
+  const userId = req.headers[HEADER.CLIENT_ID]
+  if (!userId) {
+    throw new ErrorResponse('Invalid request', 403)
+  }
+
+  const keyStore = await KeyTokenService.findByUserId(userId)
+
+  if (!keyStore) {
+    throw new ErrorResponse('Invalid user', 404)
+  }
+
+  const accessToken = req.headers[HEADER.AUTHORIZATION]
+  if (!accessToken) {
+    throw new BadRequestError('Invalid access token')
+  }
+
+  try {
+    const decodeUser = JWT.verify(accessToken, keyStore.publicKey, {
+      algorithms: ['RS256'],
+    })
+    if (userId !== decodeUser.userId) {
+      throw new BadRequestError('Invalid user token')
+    }
+    req.keyStore = keyStore
+    return next()
+  } catch (error) {
+    console.log('Error verify access token', error)
+    throw error
+  }
+})
+const authenticationV2 = asyncHandler(async (req, res, next) => {
   const userId = req.headers[HEADER.CLIENT_ID]
   if (!userId) {
     throw new ErrorResponse('Invalid request', 403)
