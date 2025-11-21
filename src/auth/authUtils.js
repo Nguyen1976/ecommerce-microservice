@@ -7,7 +7,7 @@ const HEADER = {
   API_KEY: 'x-api-key',
   CLIENT_ID: 'x-client-id',
   AUTHORIZATION: 'authorization',
-  REFRESH_TOKEN: 'refreshtoken',
+  REFRESH_TOKEN: 'x-refresh-token',
 }
 
 const crateTokenPair = async (payload, publicKey, privateKey) => {
@@ -82,6 +82,25 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
     throw new ErrorResponse('Invalid user', 404)
   }
 
+  if (req.headers[HEADER.REFRESH_TOKEN]) {
+    try {
+      const refreshToken = req.headers[HEADER.REFRESH_TOKEN]
+      const decodeUser = JWT.verify(refreshToken, keyStore.publicKey, {
+        algorithms: ['RS256'],
+      })
+      if (userId !== decodeUser.userId) {
+        throw new BadRequestError('Invalid user token')
+      }
+      req.keyStore = keyStore
+      req.user = decodeUser
+      req.refreshToken = refreshToken
+      return next()
+    } catch (error) {
+      console.log('Error verify access token', error)
+      throw error
+    }
+  }
+
   const accessToken = req.headers[HEADER.AUTHORIZATION]
   if (!accessToken) {
     throw new BadRequestError('Invalid access token')
@@ -110,4 +129,5 @@ module.exports = {
   crateTokenPair,
   authentication,
   verifyJWT,
+  authenticationV2,
 }

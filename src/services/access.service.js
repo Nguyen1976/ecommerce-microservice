@@ -15,35 +15,18 @@ const RoleShop = {
 }
 
 class AccessService {
-  handlerRefreshToken = async (refreshToken) => {
-    const foundToken = await KeyTokenService.findByRefreshTokenUsed(
-      refreshToken
-    )
-    if (foundToken) {
-      const { userId, email } = await verifyJWT(
-        refreshToken,
-        foundToken.privateKey
-      )
+  handlerRefreshTokenV2 = async ({ user, keyStore, refreshToken }) => {
+    const { userId, email } = user
 
+    if (keyStore.refreshTokenUsed.includes(refreshToken)) {
       //xóa hết token trong store
       await KeyTokenService.deleteById(userId)
-
       throw new ErrorResponse('Something wrong happen. Please re-login', 403)
     }
 
-    const holderToken = await KeyTokenService.findByRefreshTokenUsed(
-      refreshToken
-    )
-
-    if (!holderToken) {
-      throw new ErrorResponse('Invalid refresh token', 403)
+    if (keyStore.refreshToken !== refreshToken) {
+      throw new ErrorResponse('Stop not registe', 403)
     }
-
-    //verify token
-    const { userId, email } = await verifyJWT(
-      refreshToken,
-      holderToken.privateKey
-    )
 
     const foundShop = await findByEmail({ email })
     if (!foundShop) {
@@ -69,10 +52,69 @@ class AccessService {
     })
 
     return {
-      user: { userId, email },
+      user,
       tokens,
     }
   }
+
+  // handlerRefreshToken = async (refreshToken) => {
+  //   const foundToken = await KeyTokenService.findByRefreshTokenUsed(
+  //     refreshToken
+  //   )
+  //   if (foundToken) {
+  //     const { userId, email } = await verifyJWT(
+  //       refreshToken,
+  //       foundToken.privateKey
+  //     )
+
+  //     //xóa hết token trong store
+  //     await KeyTokenService.deleteById(userId)
+
+  //     throw new ErrorResponse('Something wrong happen. Please re-login', 403)
+  //   }
+
+  //   const holderToken = await KeyTokenService.findByRefreshTokenUsed(
+  //     refreshToken
+  //   )
+
+  //   if (!holderToken) {
+  //     throw new ErrorResponse('Invalid refresh token', 403)
+  //   }
+
+  //   //verify token
+  //   const { userId, email } = await verifyJWT(
+  //     refreshToken,
+  //     holderToken.privateKey
+  //   )
+
+  //   const foundShop = await findByEmail({ email })
+  //   if (!foundShop) {
+  //     throw new BadRequestError('Shop not registered')
+  //   }
+
+  //   const tokens = await crateTokenPair(
+  //     {
+  //       userId: foundShop._id,
+  //       email,
+  //     },
+  //     holderToken.publicKey, // verify
+  //     holderToken.privateKey // sign
+  //   )
+
+  //   await holderToken.update({
+  //     $set: {
+  //       refreshToken: tokens.refreshToken,
+  //     },
+  //     $addToSet: {
+  //       refreshTokenUsed: refreshToken,
+  //     },
+  //   })
+
+  //   return {
+  //     user: { userId, email },
+  //     tokens,
+  //   }
+  // }
 
   login = async ({ email, password, refreshToken = null }) => {
     const foundShop = await findByEmail({ email })
