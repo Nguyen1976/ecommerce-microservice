@@ -1,5 +1,6 @@
 const express = require('express')
 const { apikey, permission } = require('../auth/checkAuth')
+
 const router = express.Router()
 
 router.get('/', (req, res) => {

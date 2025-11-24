@@ -1,14 +1,15 @@
-const statusCode = {
-  FORBIDDEN: 403,
-  CONFLICT: 409,
-}
-
-const ReasonStatusCode = {
-  FORBIDDEN: 'Bad request error',
-  CONFLICT: 'Conflict error',
-}
 
 class ErrorResponse extends Error {
+  statusCode = {
+    FORBIDDEN: 403,
+    CONFLICT: 409,
+  }
+  
+  ReasonStatusCode = {
+    FORBIDDEN: 'Bad request error',
+    CONFLICT: 'Conflict error',
+  }
+  
   constructor(message, status) {
     super(message)
     this.status = status
@@ -17,8 +18,8 @@ class ErrorResponse extends Error {
 
 class ConflictRequestError extends ErrorResponse {
   constructor(
-    message = ReasonStatusCode.CONFLICT,
-    statusCode = statusCode.CONFLICT
+    message = this.ReasonStatusCode.CONFLICT,
+    statusCode = this.statusCode.CONFLICT
   ) {
     super(message, statusCode)
   }
@@ -26,8 +27,8 @@ class ConflictRequestError extends ErrorResponse {
 
 class BadRequestError extends ErrorResponse {
   constructor(
-    message = ReasonStatusCode.FORBIDDEN,
-    statusCode = statusCode.FORBIDDEN
+    message = this.ReasonStatusCode.FORBIDDEN,
+    statusCode = this.statusCode.FORBIDDEN
   ) {
     super(message, statusCode)
   }

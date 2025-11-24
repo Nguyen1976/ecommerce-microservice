@@ -96,7 +96,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
       req.refreshToken = refreshToken
       return next()
     } catch (error) {
-      console.log('Error verify access token', error)
+      console.log('Error verify refresh token', error)
       throw error
     }
   }
@@ -114,6 +114,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
       throw new BadRequestError('Invalid user token')
     }
     req.keyStore = keyStore
+    req.user = decodeUser
     return next()
   } catch (error) {
     console.log('Error verify access token', error)

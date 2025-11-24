@@ -9,18 +9,17 @@ const ReasonStatusCode = {
   OK: 'OK',
   CREATED: 'Created',
 }
-
 class SuccessResponse {
   constructor({
     message,
-    statusCode = statusCode.OK,
-    reason = ReasonStatusCode.OK,
+    statusCode2 = statusCode.OK,
+    reason2 = ReasonStatusCode.OK,
     metadata = {},
   }) {
     this.message = message || reason
-    this.status = statusCode
+    this.status = statusCode2
     this.metadata = metadata
-    this.reason = reason
+    this.reason = reason2
   }
 
   send(res, headers = {}) {
