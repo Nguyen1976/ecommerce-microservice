@@ -10,6 +10,7 @@ router.get(
 )
 router.get('', asyncHandler(productController.findAllProducts))
 router.get('/:product_id', asyncHandler(productController.findProduct))
+router.patch('/:product_id', asyncHandler(productController.updateProduct))
 
 router.use(authenticationV2)
 /////

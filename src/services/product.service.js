@@ -14,6 +14,7 @@ const {
   searchProductByUser,
   findAllProducts,
   findProduct,
+  updateProductById,
 } = require('../models/repositories/product.repo')
 
 class ProductFactory {
@@ -36,8 +37,8 @@ class ProductFactory {
   }
 
   static async updateProduct(productType, payload) {
-    // const Strategy = this.registerProductType(productType)
-    // return new Strategy(payload).createProduct()
+    const Strategy = this.registerProductType(productType)
+    return new Strategy(payload).updateProduct(payload.product_id, payload)
   }
 
   //publish
@@ -115,6 +116,14 @@ class Product {
     const newProduct = await product.create({ ...this, _id: product_id })
     return newProduct
   }
+
+  async updateProduct(productId, bodyUpdate) {
+    return await updateProductById({
+      productId,
+      bodyUpdate,
+      model: product,
+    })
+  }
 }
 
 //define sub class for different product types clothing
@@ -130,6 +139,26 @@ class Clothing extends Product {
     if (!newProduct) throw BadRequestError('Create product error')
 
     return newProduct
+  }
+
+  async updateProduct(productId) {
+    /**
+     *
+     */
+
+    const objectParams = this
+
+    if (objectParams.product_attributes) {
+      await updateProductById({
+        productId,
+        bodyUpdate: objectParams,
+        model: clothing,
+        isNew: false,
+      })
+    }
+
+    const updateProduct = await super.updateProduct(productId, objectParams)
+    return updateProduct
   }
 }
 //define sub class for different product types clothing
