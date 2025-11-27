@@ -5,6 +5,7 @@ const {
   electronic,
   furniture,
 } = require('../models/product.model')
+const { insertInventory } = require('../models/repositories/inventory.repo')
 const {
   findAllDraftsForShop,
   publishProductByShop,
@@ -114,6 +115,17 @@ class Product {
 
   async createProduct(product_id) {
     const newProduct = await product.create({ ...this, _id: product_id })
+
+    if (newProduct) {
+      //add inventory
+      await insertInventory({
+        productId: newProduct._id,
+        stockId: this.product_shop,
+        stock: this.product_quantity,
+        location: this.product_attributes?.location,
+      })
+    }
+
     return newProduct
   }
 
