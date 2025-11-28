@@ -3,7 +3,11 @@
 const { update } = require('lodash')
 const { product, electronic, clothing, furniture } = require('../product.model')
 const { Types } = require('mongoose')
-const { getSelectData, unGetSelectData } = require('../../utils')
+const {
+  getSelectData,
+  unGetSelectData,
+  convertToObjectIdMongodb,
+} = require('../../utils')
 
 const publishProductByShop = async ({ product_shop, product_id }) => {
   const productFound = await product.findOne({
@@ -90,6 +94,10 @@ const updateProductById = async ({
   return await model.findByIdAndUpdate(productId, bodyUpdate, { new: isNew })
 }
 
+const getProductById = async (productId) => {
+  return await product.findOne({ _id: convertToObjectIdMongodb(productId) })
+}
+
 module.exports = {
   publishProductByShop,
   queryProduct,
@@ -98,4 +106,5 @@ module.exports = {
   findAllProducts,
   findProduct,
   updateProductById,
+  getProductById,
 }
