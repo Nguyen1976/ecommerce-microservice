@@ -1,7 +1,9 @@
 const { BadRequestError } = require('../core/error.response')
+const { order } = require('../models/order.model')
 const { product } = require('../models/product.model')
 const { findCartById } = require('../models/repositories/cart.repo')
 const { checkProductByServer } = require('../models/repositories/product.repo')
+const { acquireLock, realeaseLock } = require('./redis.service')
 
 class CheckoutService {
   static async checkoutReview({ cartId, userId, shop_order_ids }) {
@@ -69,6 +71,62 @@ class CheckoutService {
       checkout_order,
     }
   }
+
+  static async orderByOrder({
+    shop_order_ids,
+    cartId,
+    userId,
+    user_address = {},
+    user_payment = {},
+  }) {
+    const { shop_order_ids_new, checkout_order } =
+      await CheckoutService.checkoutReview({
+        cartId,
+        userId,
+        shop_order_ids,
+      })
+
+    //flat map
+
+    const products = shop_order_ids_new.flatMap((order) => order.item_products)
+
+    const acquireProduct = []
+    for (let i = 0; i < products.length; i++) {
+      const { productId, quantity } = products[i]
+
+      const keyLock = await acquireLock(productId, quantity, cartId)
+      acquireProduct.push(!!keyLock)
+
+      if (keyLock) {
+        await realeaseLock(keyLock)
+      }
+    }
+
+    //check
+    if (acquireProduct.includes(false)) {
+      throw new BadRequestError('Your order faild, please try again')
+    }
+
+    const newOrder = await order.create({
+      order_userId: userId,
+      order_checkout: checkout_order,
+      order_shipping: user_address,
+      order_payment: user_payment,
+      order_products: shop_order_ids_new,
+    })
+
+    //trường hợp xảy ra
+    if (newOrder) {
+    }
+  }
+
+  static async getOrderByUser() {}
+
+  static async getOneOrderByUser() {}
+
+  static async cancelOrderByUser() {}
+
+  static async updateOrderStatusbyShop() {}
 }
 
 module.exports = CheckoutService
